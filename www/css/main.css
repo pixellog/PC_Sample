@@ -1,0 +1,267 @@
+/*common*/
+body {
+	font: 14px/16px "Lucida Grande", "Lucida Sans Unicode", Dotum, Helvetica,
+		Arial, Verdana, sans-serif;
+	background-color: transparent;
+	color: #333;
+	-webkit-font-smoothing: antialiased;
+}
+
+body, input {
+	font-size: 14px;
+	color: #333;
+}
+
+h1, h2, h3 {
+	margin: 0 0 8px 0;
+}
+
+h2 {
+	font-size: 18px;
+}
+
+table {
+	width: 100%;
+	border-collapse:collapse;
+	border:1px gray solid;
+}
+
+textarea {
+	width : 100%;
+}
+
+.color-red {
+	color: red;
+}
+
+.text-left {
+	text-align: left;
+}
+
+.text-center {
+	text-align: center;
+}
+
+.text-right {
+	text-align: right;
+}
+
+/*modal*/
+.ui-widget-overlay {
+	background: #000;
+	opacity: .6;
+}
+
+.ui-dialog {
+	border: 0;
+	border-radius: 0;
+	padding: 0;
+}
+
+.ui-dialog .ui-dialog-titlebar {
+	border: 0;
+	border-radius: 0;
+	padding: 1em;
+	background-color: #343a48;
+}
+
+.ui-dialog .ui-dialog-title {
+	font-size: 20px;
+	line-height: 1;
+	font-weight: normal;
+	color: #fff;
+	padding-left: .3em;
+}
+
+.ui-dialog .ui-dialog-content {
+	padding: 24px;
+}
+
+.ui-dialog .ui-dialog-buttonpane {
+	background-color: #eee;
+	border: 0;
+	margin-top: .5em;
+	padding: 18px 95px;
+}
+
+.ui-dialog .ui-dialog-buttonpane button {
+	font-size: 18px;
+	font-weight: bold;
+	border: 0;
+	border-radius: 0;
+	background-color: #a0a0a0;
+	color: #fff;
+	width: 170px;
+	margin: 0;
+	padding: 4px;
+}
+
+.ui-dialog .ui-dialog-buttonpane button:focus, .ui-dialog .ui-dialog-buttonpane button:active
+	{
+	background-color: #808080;
+}
+
+.ui-dialog .ui-dialog-buttonpane button:first-child:focus, .ui-dialog .ui-dialog-buttonpane button:first-child:active
+	{
+	background-color: #1f749c;
+}
+
+.ui-dialog .ui-dialog-buttonpane button:first-child {
+	background-color: #2791c3;
+}
+
+.ui-dialog .ui-dialog-buttonpane button+button {
+	margin-left: 20px;
+}
+
+.ui-dialog .ui-dialog-titlebar-close.ui-state-default {
+	border: 0;
+	background-color: transparent;
+}
+
+.ui-dialog .ui-dialog-titlebar-close .ui-icon {
+	width: 22px;
+	height: 22px;
+	background: url(../images/modal_close.png) no-repeat 0 0;
+	left: auto;
+	right: 16px;
+	top: -2px;
+	margin: 0;
+}
+
+/*table*/
+.cert-list {
+	height: 199px;
+	overflow: hidden;
+	overflow-y: scroll;
+	margin: 10px 0;
+}
+
+.table-bordered {
+	border-collapse: collapse;
+	width: 100%;
+	font-size: 13px;
+}
+
+.table-bordered thead th {
+	background-color: #eee;
+	color: #333;
+}
+
+.table-bordered th, .table-bordered td {
+	border: 1px solid #c9c9c9;
+	padding: 8px 6px;
+	color: #666;
+	background-color: #fff;
+	vertical-align: middle;
+	height: 16px;
+}
+
+.table-bordered .selected td, .table-bordered :focus td {
+	color: #fff;
+	background-color: #6a8d9e;
+}
+
+.table-bordered .selected .ico-cert, .table-bordered :focus .ico-cert {
+	background-image: url(../images/ico_cert_on.png);
+}
+
+.ico-cert {
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	background: transparent url(../images/ico_cert.png) 0 0 no-repeat;
+	margin-bottom: -3px;
+}
+
+.ellipsis {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	width: 200px;
+}
+
+/*custom*/
+.cert-select {
+	border: 1px solid #c9c9c9;
+	padding: 14px;
+	text-align: center;
+	position: relative;
+}
+
+.cert-select img:focus {
+	outline: 0
+}
+
+.cert-select img+img {
+	margin-left: 10px;
+}
+
+.usb-list {
+	list-style-type: none;
+	text-align: left;
+	width: 188px;
+	position: absolute;
+	left: 167px;
+	top: 110px;
+}
+
+.usb-list li {
+	background-color: #b3cbd7;
+	margin-bottom: 1px;
+	padding: 12px;
+}
+
+.usb-list li.selected, .usb-list li:hover {
+	background-color: #9db2bd;
+}
+
+.form-cert-password {
+	margin-top: 16px;
+	font-weight: bold;
+}
+
+.form-cert-password p {
+	margin-bottom: 10px;
+}
+
+.password-wrapper {
+	position: relative;
+}
+
+.form-cert-password label {
+	color: #666;
+	margin-top: 8px;
+	display: inline-block;
+}
+
+.form-cert-password input {
+	border: 1px solid #c9c9c9;
+	width: 72%;
+	height: 33px;
+	line-height: 33px;
+	padding: 0 10px;
+	position: absolute;
+	right: 0;
+}
+
+.engine-progress {
+	width: 90%;
+	height: 30px;
+	position: relative;
+	background-color: #ddd;
+	margin-top: 10px;
+}
+
+.engine-progressbar {
+	background-color: #4CAF50;
+	width: 0%;
+	height: 100%;
+	position: absolute;
+}
+
+.Progressbar-label {
+	text-align: center;
+	line-height: 30px;
+	color: white;
+}

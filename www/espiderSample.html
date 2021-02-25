@@ -1,0 +1,671 @@
+﻿<!-- 
+ * espiderSample.html
+ * 
+ * v1.3.1
+ * 
+ * + v1.3.0 [20170614 djlee]
+ * 		- 샘플 리뉴얼.
+ * + v1.3.1 [20170705 djlee]
+ * 		- UI 수정
+ *
+ *    
+ * Copyright (c) Heenam Co.,Ltd All Rights Reserved
+  -->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd"> 
+<html lang="ko">
+<head>
+
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>eSpider Sample</title>
+
+<script src="js/lib/jquery-latest.js"></script>
+<script src="js/lib/json2.js"></script>
+<script src="js/lib/espider.io.js"></script> 
+<script src="js/lib/espider.js"></script>
+
+<script src="js/lib/jquery.min.js"></script>
+<script src="js/lib/lodash.min.js"></script>
+<script src="js/lib/jquery-ui.min.js"></script>
+
+<script src="js/ecertDialog.js"></script>
+<script src="js/espiderSample.js"></script>
+
+<link rel="stylesheet" href="css/lib/jquery-ui.css">
+<link rel="stylesheet" href="css/main.css">
+
+<script type="text/javascript">
+var jobCount = 0;		// job 갯수
+var percentArray = [];	// job별 진행률 array
+
+$(function(){
+	// 엔진 초기화
+	$('#btnInit').click(function() {
+		fn_EnginInitialize();
+	});
+	
+	// 엔진버전 가져오기
+	$('#btnEnginVersion').click(function() {
+		if(!isListenerAdded) {
+			alert("Listener 등록후 진행하시기 바랍니다.");
+			return false;
+		} else {
+			espider.engineVersion();	
+		}
+	});
+	
+	// Get Device UUID
+	$('#btnDeviceUUID').click(function() {
+		if(!isListenerAdded) {
+			alert("Listener 등록후 진행하시기 바랍니다.");
+			return false;
+		} else {
+			 espider.engineGetDevice("deviceUUID");	
+			 espider.engineGetDevice();	
+		}
+	});
+
+	
+	// 엔진 정보 Area Clear
+	$('#btnClearEngineInfoArea').click(function() {
+		screenEngineInfoClear();
+	});
+	
+	// 리스너 등록
+	$('#btnAddListener').click(function() {
+		fn_AddListener(listenerFnMap);
+	});
+	
+	// Cancel All
+	$('#btnCancelAll').click(function() {
+		espider.engineCancelAll();
+	});
+
+	// 엔진 종료
+	$('#btnFinish').click(function() {
+		espider.engineCancelAll();
+		fn_EngineFinalize();
+	});
+	
+	// 인증서 리스트 팝업 호출
+	$('#loadDialog').click(function() {
+		fn_loadCertDialog(onCertSelected);
+	});
+	
+	// 엔진 start
+	$('#btnStartEngine').click(function(){
+		if(fn_startEngine()){
+			createProgress();
+			screenLogClear();
+		}
+	});
+	
+	// 건강보험공단 자격득실확인
+	$('#btnKRPP0002010010').click(function() {
+		addJob("KRPP0002010010");
+	});
+	
+	// 건강보험공단 보험료납부확인
+	$('#btnKRPP0002010020').click(function() {
+		addJob("KRPP0002010020");
+	});
+	
+	// 건강보험공단 자격확인
+	$('#btnKRPP0002010060').click(function() {
+		addJob("KRPP0002010060");
+	});
+	
+	// 국민연금 연금산정용 가입내역확인서
+	$('#btnKRPP0001010060').click(function() {
+		addJob("KRPP0001010060");
+	});
+	
+	// 국민연금 연금지급내역 증명서
+	$('#btnKRPP0001010070').click(function() {
+		addJob("KRPP0001010070");
+	});
+	
+	// 홈택스 소득금액증명
+	$('#btnKRNT0001010000').click(function() {
+		addJob("KRNT0001010000");
+	}); 
+	
+	// 홈택스 부가가치세 면세사업자 수입금액증명
+	$('#btnKRNT0001010050').click(function() {
+		addJob("KRNT0001010050");
+	});
+	
+	// 홈택스 사업자등록증명
+	$('#btnKRNT0001010030').click(function() {
+		addJob("KRNT0001010030");
+	});
+	
+	// 홈택스 부가가치세표준증명
+	$('#btnKRNT0001010040').click(function() {
+		addJob("KRNT0001010040");
+	});
+	
+	// Clear Job
+	$('#btnClearJob').click(function() {
+		clearProgress();
+		screenJobListClear();
+		screenLogClear();
+
+		fn_ClearJob();
+	}); 
+	
+	// 보안키패드 테스트
+	// 보안키패드 임시데이터
+	$('#btnNosSetParam').click(function() {
+		nosSetPram();
+	});
+	// 보안키패드 변환데이터
+	$('#btnNosToEspiderData').click(function() {
+		nosToEspiderData();
+	});				
+	
+	// 보안키패드 안랩 변환데이터
+	$('#btnAhnlabToEspiderData').click(function() {
+		ahnlabToEspiderData();
+	});				
+});
+
+function getIdentity(){
+	var identity = $("#identity").val();
+	/* 
+		암호화된 값을 입력할 수 있도록 validation 제거
+		2019.05.14 by marco
+		
+		if(!isValidIdentity(identity)){
+		alert("주민번호를 정확히 입력해 주시기 바랍니다.");
+		$("#identity").focus();
+		return null;
+	} */
+	
+	return identity;
+}
+
+// 실행할 job을 엔진에 추가
+// 각각의 job을 추가 할때마다 추가된 모든 job에대한 정보(jobInfo)를 리턴 받는다.
+function addJob(moduleCode){
+	var jobInfo;
+	if(moduleCode == "KRPP0002010010"){
+		// 건강보험공단 자격득실확인
+		var identity = getIdentity();
+		if(identity == null){
+			return;
+		}
+		jobInfo = fn_KRPP0002010010(identity);
+	}else if(moduleCode == "KRPP0002010020"){
+		// 건강보험공단 보험료납부확인
+		var identity = getIdentity();
+		if(identity == null){
+			return;
+		}
+		jobInfo = fn_KRPP0002010020(identity);
+	}else if(moduleCode == "KRPP0002010060"){
+		// 건강보험공단 자격확인
+		var identity = getIdentity();
+		if(identity == null){
+			return;
+		}
+		jobInfo = fn_KRPP0002010060(identity);
+	}else if(moduleCode == "KRPP0001010060"){
+		// 국민연금 연금산정용 가입내역확인서
+		var identity = getIdentity();
+		if(identity == null){
+			return;
+		}
+		jobInfo = fn_KRPP0001010060(identity);
+	}else if(moduleCode == "KRPP0001010070"){
+		// 국민연금 연금산정용 가입내역확인서
+		var identity = getIdentity();
+		if(identity == null){
+			return;
+		}
+		jobInfo = fn_KRPP0001010070(identity);
+	}else if(moduleCode == "KRNT0001010000"){
+		// 홈택스 소득금액증명
+		jobInfo = fn_KRNT0001010000();
+	}else if(moduleCode == "KRNT0001010050"){
+		// 홈택스 부가가치세 면세사업자 수입금액증명
+		var identity = $("#identity2").val();
+		if(identity == ""){
+			alert("사업자번호를 입력 해주세요.");
+			$("#identity2").focus();
+			return;
+		}
+		jobInfo = fn_KRNT0001010050(identity);
+	}else if(moduleCode == "KRNT0001010030"){
+		// 홈택스 사업자등록증명
+		jobInfo = fn_KRNT0001010030($("#identity2").val());
+	}else if(moduleCode == "KRNT0001010040"){
+		// 홈택스 부가가치세표준증명
+		jobInfo = fn_KRNT0001010040($("#identity2").val());
+	}
+	
+	// 추가된 총 job 갯수 저장.
+	jobCount = jobInfo.jobArray.length;
+	
+	var jobElem = document.getElementById('jobListArea');
+	jobElem.value = JSON.stringify(jobInfo);
+}
+
+// 진행률을 표시할 pregress bar를 생성.
+function createProgress(){
+	clearProgress();
+	
+	var innerHtml = "";
+		
+	innerHtml += '		<div class="engine-progress">';
+	innerHtml += '			<div class="engine-progressbar" id="engineProgressbar">';
+	innerHtml += '				<div class="Progressbar-label" id="ProgressbarLabel">0%</div>';
+	innerHtml += '			</div>';
+	innerHtml += '		</div>';
+		
+	$("#progressArea").append(innerHtml);
+}
+
+// pregress bar 초기화
+function clearProgress(){
+	$("#progressArea").html("");
+	percentArray = [];
+}
+
+var listenerFnMap = {
+
+	// 각 job의 스크래핑이 완료 되었을때 결과를 리턴받을 콜백함수
+	// !주의 : job을 추가한 순서대로 결과가 리턴되지 않음. job을 추가한 순서값(jobResult.jobIdx)으로 어떤 job에 대한 결과인지 판단 해야함.
+	onResult : function (jobResult) {
+		var resultText = " * 결과 - [" + jobResult.jobIdx + "] -------------------------------------------------------------------------------------------- \n";
+		resultText += JSON.stringify(jobResult) + "\n";
+		
+		screenLog(resultText);
+		
+		// 전체 진행률 계산
+		percentArray[jobResult.jobIdx] = 100;
+		var sumPercent = 0;
+		for(var i = 0 ; i < percentArray.length ; i++){
+			if(percentArray[i]){
+				sumPercent += percentArray[i];
+			}
+		}
+		
+		var maxPercent = 100 * jobCount;
+		var totalPercent = Math.round(sumPercent / maxPercent * 100);
+		
+		// job별 진행률 화면에 표시
+		var elem = document.getElementById("engineProgressbar"); 
+		elem.style.width = totalPercent + '%'; 
+		document.getElementById("ProgressbarLabel").innerHTML =totalPercent * 1 + '%';
+		
+		console.log("    totalPercent : " + totalPercent);
+	},
+	
+	// 모든 job의 스크래핑이 완료 되었을때 결과를 리턴받을 콜백함수
+	// job을 추가한 순서(jobIdx)대로 resultArray에 담겨있음.
+	onFinished : function (resultArray) {
+		var resultText = "\n\n * 결과 - [모든 결과] ============================================================================================== \n";
+		resultText += JSON.stringify(resultArray) + "\n";
+		
+		screenLog(resultText);
+	},
+
+	// Engine Version을 가져온 후 실행될 콜백 함수
+	onEnginVersion : function (version) {
+		engineInfoLog('Engin Version : ' + version);
+	},
+	
+	// Device Info 를 가져온 후 실행될 콜백 함수
+	onDeviceInfo : function (deviceInfo){
+		engineInfoLog('Device Info : ' + JSON.stringify(deviceInfo));
+	}
+}
+
+//엔진 정보를 출력
+function engineInfoLog(s) {
+	var engineInfoElem = document.getElementById('engineInfoArea');
+	engineInfoElem.value += (s + '\n');
+}
+
+//인증서가 선택 되었을 때 호출될 콜백
+function onCertSelected(selectedCert) {
+	$("#selectCertCN").html(selectedCert["cert.subjectname.CN"]);
+}
+
+// 결과창에 텍스트 출력
+function screenLog(s) {
+	var resultElem = document.getElementById('resultArea');
+	resultElem.value += (s + '\n');
+}
+
+// 결과창에 출력하는 Log를 Clear
+function screenLogClear() {
+	var resultElem = document.getElementById('resultArea');
+	resultElem.value = "";
+}
+
+// job List출력창을 Clear
+function screenJobListClear(){
+	var jobElem = document.getElementById('jobListArea');
+	jobElem.value = "";
+}
+
+
+function screenEngineInfoClear(){
+	var engineInfoElem = document.getElementById('engineInfoArea');
+	engineInfoElem.value = '';
+}
+
+//NOS 보안키패드 임시(test)데이터		
+function nosSetPram() {
+	document.getElementById("nosEncTable").value = "17a4a82e0d599200bf2d481c606711ec7c209958b53f70ce8d161106cad49d30a312e6b7f3c78e7d7ca472c65a111ca82bd3fe9b0041c6c0c959e8d29bea4282177f9a04c9ab8a887dbba5209b729e760ad5c670e9ca4f91bdd65887401e426ab42a73fb44196263fbb4e1448cd1a183819a9c80d3ed46ef306581b7631ac7591f2b14733005bdfe172da9a00de89b5de7fbeeb92e88536c8d52e486adaa297e";
+	document.getElementById("nosEncData").value = "9\\FOjadi";
+	document.getElementById("nosEncType").value = 0;
+}
+
+// NOS 보안키패드 데이터 변환 - 보안키패드의 데이터를 스크래핑 엔진에 전달 가능한 암호화값으로 변환
+// NOS 암호화가 적용된 데이터(주민번호, 인증서 암호 등)의 경우 변환된 값(retData.CONVERT)을 job의 파라미터로 추가하여 전달.
+function nosToEspiderData() {
+	var data = {};
+	data.table =  document.getElementById("nosEncTable").value;
+	data.encData = document.getElementById("nosEncData").value;
+	data.encType = document.getElementById("nosEncType").value;
+	
+	fn_NosToEspiderData(data, function(retData){
+		if (retData.SUCCESS) {
+			// 변환 성공
+			document.getElementById("espiderConverData").value = retData.CONVERT;
+		} else {
+			// 변환 실패
+			alert("error nos " + JSON.stringify(retData));
+			
+			//retData.REASON	
+			//	-9999	invalid parameter
+			//	-9998	encrypt option not found
+			//	-1		nos keypad not install or library load fail
+			//  -2		nos keypad fail initialization
+			//  -3		nos keypad fail decrypt
+		}
+	});
+}
+
+
+// Ahnlab 보안키패드 데이터 변환 - 보안키패드의 데이터를 스크래핑 엔진에 전달 가능한 암호화값으로 변환
+// Ahnlab 암호화가 적용된 데이터(주민번호, 인증서 암호 등)의 경우 변환된 값(retData.CONVERT)을 job의 파라미터로 추가하여 전달.
+function ahnlabToEspiderData() {
+	var data = {};
+	data.formID =  document.getElementById("ahnlabFormID").value;
+	data.windowID = document.getElementById("ahnlabWindowID").value;
+	data.inputID = document.getElementById("ahnlabInputID").value;
+	
+	fn_AhnlabToEspiderData(data, function (retData){
+		espider._logger.log(JSON.stringify(retData));
+		if (retData.SUCCESS) {
+			document.getElementById("espiderAhnlabConverData").value = retData.CONVERT;
+		} else {
+			alert("error ahnlab " + JSON.stringify(retData));
+			//retData.REASON	
+			//	-9999	invalid parameter
+			//	-9998	encrypt option not found
+			//	-9997	input value empty
+			//	-1 convert error
+			//  -2 convert error		
+			//  -3 convert error		
+			//  -4 convert error		
+			//  -5 convert error		
+			//  -6 convert error
+			//  else ahnlab error code	
+		} 
+	});
+}
+
+
+</script>
+	
+	
+</head>
+<body>
+	<br>
+	<h1> Espider Demo </h1>
+	
+	<table  cellpadding="5" cellspacing="0" border="1">
+		<tr>
+			<td><input type="button" id="btnInit" value="Initialize"/></td>
+			<td>시작시 실행</td>
+		</tr>
+		<tr>
+			<td><input type="button" id="btnAddListener" value="Add Listener"/></td>
+			<td>Intialize 후 실행</td>
+		</tr>
+		<tr>
+			<td><input type="button" id="btnCancelAll" value="Cancel"/></td>
+			<td>진행중인 스크래핑을 의도적으로 중지(강제 종료)</td>
+		</tr>
+	</table>
+	<br/>
+	<br/>
+	
+	<div>
+		<div style="float: left; width: 49%">
+			<h2> 개인 (직장인)</h2>
+			<br/>
+			
+			<table  cellpadding="5" cellspacing="0" border="1">
+				<tr>
+					<td><label>주민번호  :  </label><input type="text" id="identity" style="height:24px;"/></td>
+				</tr>
+				<tr>
+					<td class="color-red">
+						 * 자격득실확인, 보험료납부확인, 연금산정용 가입내역확인서 에서는 필수<br/>
+						 * 소득금액증명 에서는 입력 불필요<br/>
+					</td>
+				</tr>
+			</table>
+			<br/>
+			
+			<table  cellpadding="5" cellspacing="0" border="1">
+				<colgroup>
+					<col width="50%"></col>
+					<col width="30%"></col>
+					<col width="20%"></col>
+				</colgroup>
+				<tr>
+					<td>건강보험공단 자격득실확인</td>
+					<td>KR PP 0002 010010</td>
+					<td><button class="btnKRPP0002010010" id="btnKRPP0002010010">Add Job</button></td>
+				</tr>
+				<tr>
+					<td>건강보험공단 보험료납부확인</td>
+					<td>KR PP 0002 010020</td>
+					<td><button class="btnKRPP0002010020" id="btnKRPP0002010020">Add Job</button></td>
+				</tr>
+				<tr>
+					<td>건강보험공단 자격확인</td>
+					<td>KR PP 0002 010060</td>
+					<td><button class="btnKRPP0002010060" id="btnKRPP0002010060">Add Job</button></td>
+				</tr>
+				<tr>
+					<td>국민연금 연금산정용 가입내역확인서</td>
+					<td>KR PP 0001 010060</td>
+					<td><button class="btnKRPP0001010060" id="btnKRPP0001010060">Add Job</button></td>
+				</tr>
+				<tr>
+					<td>국민연금 연금지급내역 증명서</td>
+					<td>KR PP 0001 010070</td>
+					<td><button class="btnKRPP0001010070" id="btnKRPP0001010070">Add Job</button></td>
+				</tr>
+				<tr>
+					<td>홈택스 소득금액증명</td>
+					<td>KR NT 0001 010000</td>
+					<td><button class="btnKRNT0001010000" id="btnKRNT0001010000">Add Job</button></td>
+				</tr>
+			</table>
+			<br/>
+			
+			<h2> 사업자</h2>
+			<br/>
+			
+			<table  cellpadding="5" cellspacing="0" border="1">
+				<tr>
+					<td><label>사업자번호  :  </label><input type="text" id="identity2" style="height:24px;"/></td>
+				</tr>
+				<tr>
+					<td class="color-red">
+						 * 부가가치세 면세사업자 수입금액증명 에서는 필수 - 면세사업자의 사업자번호<br/>
+						 * 사업자등록증명, 부가가치세표준증명 에서는 선택 입력 - 입력시 해당 사업자번호만 조회(미입력시 전체)<br/>
+					</td>
+				</tr>
+			</table>
+			<br/>
+			
+			<table  cellpadding="5" cellspacing="0" border="1">
+				<colgroup>
+					<col width="50%"></col>
+					<col width="30%"></col>
+					<col width="20%"></col>
+				</colgroup>
+				<tr>
+					<td>홈택스 부가가치세 면세사업자 수입금액증명</td>
+					<td>KR NT 0001 010050</td>
+					<td><button class="btnKRNT0001010050" id="btnKRNT0001010050">Add Job</button></td>
+				</tr>
+				<tr>
+					<td>홈택스 사업자등록증명</td>
+					<td>KR NT 0001 010030</td>
+					<td><button class="btnKRNT0001010030" id="btnKRNT0001010030">Add Job</button></td>
+				</tr>
+				<tr>
+					<td>홈택스 부가가치세표준증명</td>
+					<td>KR NT 0001 010040</td>
+					<td><button class="btnKRNT0001010040" id="btnKRNT0001010040">Add Job</button></td>
+				</tr>
+			</table>
+			<br>
+			<hr>
+			<br>
+			
+			<table  cellpadding="5" cellspacing="0" border="1">
+				<tr>
+					<td><input type="button" value="인증서 선택" id="loadDialog"/><span id="selectCertCN"></span></td>
+					<td>공동 인증서</td>
+				</tr>
+				<tr>
+					<td><input type="button" class="btnStartEngine" id="btnStartEngine" value="Start Job"/></td>
+					<td><button class="btnClearJob" id="btnClearJob">Clear Job</button></td>
+				</tr>
+				<tr>
+					<td><input type="button" class="btnFinish" id="btnFinish" value="Finalize"/></td>
+					<td>종료시 실행</td>
+				</tr>
+			</table>
+			<br/>
+			<hr>
+			<br/>
+			
+			<h2> 엔진 정보</h2>
+			<table  cellpadding="5" cellspacing="0" border="1">
+				<tr>
+					<td><input type="button" id="btnEnginVersion" value="EnginVersion"/></td>
+					<td>현재 엔진버전</td>
+				</tr>
+				<tr>
+					<td><input type="button" id="btnDeviceUUID" value="EnginDeviceUUID"/></td>
+					<td>특정정보 가져오기(UUID)</td>
+				</tr>
+			</table>
+		</div>
+		
+		<div style="float: left; width: 49%; margin-left: 1%">
+			<h2>Job List</h2>
+			<br/>
+			
+			<textarea id='jobListArea' rows="5" cols="120" readonly></textarea>
+			<br/>
+			<br/>
+			
+			<h2>Result</h2>
+			<br/>
+			<textarea id='resultArea' rows="36" cols="120" readonly></textarea>
+			
+			<br/>
+			<br/>
+			<h2 style="display: inline;">Engine Info</h2>
+			<button type="button" id="btnClearEngineInfoArea" style="display: inline">Clear Text</button>
+			<br/>
+			<br/>
+			<textarea id='engineInfoArea' rows="10" cols="120" readonly></textarea>
+		</div>
+		
+		<div style="clear: both;"></div>
+	</div>
+	<br>
+	<br>
+	
+	<div id="progressArea">
+	</div>
+	<br>
+	<br>
+	<div>
+		<h1> KeyPad Test (NOS 사용시) </h1>
+		<table  cellpadding="5" cellspacing="0" border="1">
+			<tr>
+				<td>NOS encTable : </td>
+				<td><input type="text" id="nosEncTable" style="width:80%"></td>
+			</tr>
+			<tr>
+				<td>NOS encData : </td>
+				<td><input type="text" id="nosEncData" style="width:80%"></td>
+			</tr>
+			<tr>
+				<td>NOS encType : </td>
+				<td><input type="text" id="nosEncType" style="width:80%"></td>
+			</tr>
+			<tr>
+				<td>
+					Espider convertData : 
+					<button class="btnNosSetPram" id="btnNosSetParam">SetParamData</button>
+					<button class="btnNosToEspiderData" id="btnNosToEspiderData">getEspiderData</button>
+				</td>
+				<td><input type="text" id="espiderConverData" style="width:80%"></td>
+			</tr>
+		</table>
+	</div>
+	<br/>
+	<!-- 
+		# htjulia ahnlab keypad 연동
+		# 2017.07.11
+		# espider.js v2.0.6 
+		# engineVer v.2.0.6
+	-->	
+	<br>
+	<div>
+		<h1> KeyPad Test (Ahnlab 사용시) </h1>
+		<table  cellpadding="5" cellspacing="0" border="1">
+			<tr>
+				<td>Ahnlab windowID : </td>
+				<td><input type="text" id="ahnlabWindowID" style="width:80%"></td>
+			</tr>
+			<tr>
+				<td>Ahnlab formID : </td>
+				<td><input type="text" id="ahnlabFormID" style="width:80%"></td>
+			</tr>
+			<tr>
+				<td>Ahnlab inputID : </td>
+				<td><input type="text" id="ahnlabInputID" style="width:80%"></td>
+			</tr>
+			<tr>
+				<td>
+					Espider convertData : 
+					<button class="btnAhnlabEspiderData" id="btnAhnlabToEspiderData">convertAhnlab</button>
+				</td>
+				<td><input type="text" id="espiderAhnlabConverData" style="width:80%"></td>
+			</tr>
+		</table>
+	</div>
+	<br/>
+
+</body>
+</html>
